@@ -1,0 +1,72 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}  % Allows you to type UTF-8 characters directly
+\usepackage[T1]{fontenc}    % Ensures the PDF output uses 8-bit encoding for better font rendering
+
+\title{wspolrzedne-grafu}
+\author{Ksawery Olaf }
+\date{March 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Dokumentacja funkcjonalna opisująca działanie projektu}
+
+\subsection{Cel projektu}
+Celem niniejszej aplikacji jest automatyczne wyznaczanie optymalnych współrzędnych wierzchołków dla grafów planarnych. Program przekształca surową listę krawędzi w czytelną reprezentację wizualną, wykorzystując zaawansowane algorytmy rozmieszczania wierzchołków (tzw. \textit{graph layout algorithms}), co pozwala na uniknięcie nakładania się krawędzi i zwiększenie czytelności struktury danych.
+
+\subsection{Opis funkcji programu}
+Program oferuje następujące funkcjonalności:
+\begin{itemize}
+    \item Wczytywanie struktury grafu z plików tekstowych (lista krawędzi).
+    \item Obliczanie współrzędnych $x, y$ dla każdego węzła przy użyciu co najmniej dwóch algorytmów (np. Fruchterman–Reingold, Twierdzenie Tutte’a).
+    \item Eksport wyników do formatu tekstowego lub binarnego, zgodnie z wyborem użytkownika.
+    \item Wersja C: Szybkie przetwarzanie wsadowe za pomocą interfejsu linii poleceń (CLI).
+    \item Wersja Java: Interaktywna wizualizacja grafu z możliwością ręcznej modyfikacji widoku.
+\end{itemize}
+
+\subsection{Interfejs użytkownika i obsługa programu}
+
+\subsubsection{Aplikacja w języku C (CLI)}
+Program sterowany jest za pomocą flag i argumentów wywołania.
+\begin{description}
+    \item[\texttt{-i <plik>}] Określa plik wejściowy z listą krawędzi.
+    \item[\texttt{-o <plik>}] Określa plik wyjściowy dla współrzędnych.
+    \item[\texttt{-a <algorytm>}] Wybór algorytmu obliczeniowego (np. \texttt{FR} dla Fruchterman-Reingold, \texttt{TUT} dla Tutte).
+    \item[\texttt{-b}] Zapis wyniku w formacie binarnym (domyślnie tekstowy).
+\end{description}
+
+\subsubsection{Aplikacja w języku Java (GUI)}
+Interfejs graficzny umożliwia:
+\begin{itemize}
+    \item \textbf{Menu Plik:} Wczytywanie danych (tekstowych/binarnych) oraz zapis wyników.
+    \item \textbf{Panel Wizualizacji:} Samodzielnie zaimplementowany komponent rysujący graf.
+    \item \textbf{Panel Narzędziowy:} Wybór algorytmu, zmiana pola widzenia (zoom), oraz przełączanie etykiet/wag.
+\end{itemize}
+
+\subsection{Format danych wejściowych i wyjściowych}
+\paragraph{Dane wejściowe (TXT):} Plik powinien zawierać wiersze w formacie: \\
+\texttt{<nazwa\_krawędzi> <wierzchołek\_A> <wierzchołek\_B> <waga>}.
+
+\paragraph{Dane wyjściowe (TXT):} Wynikiem jest lista współrzędnych: \\
+\texttt{<id\_wierzchołka> <x> <y>}.
+
+\subsection{Sytuacje wyjątkowe i komunikaty błędów}
+Program przewiduje i obsługuje następujące błędy:
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Sytuacja} & \textbf{Komunikat / Zachowanie} \\ \hline
+Brak pliku wejściowego & "Error: Input file not found." (Kod powrotu 1) \\ \hline
+Nieprawidłowy format danych & "Error: Invalid graph format at line [nr]." \\ \hline
+Graf nie jest planarny & "Warning: Provided graph may not be planar." \\ \hline
+Błąd zapisu & "Error: Permission denied / Disk full." \\ \hline
+\end{tabular}
+\caption{Obsługa błędów w aplikacji.}
+\end{table}
+\section{Dokumentacja implementacyjna}
+\section{Końcowa dokumentacja projektu}
+
+\end{document}
