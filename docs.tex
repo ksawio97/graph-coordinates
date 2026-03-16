@@ -1,72 +1,153 @@
-\documentclass{article}
+\documentclass[12pt,a4paper]{article}
 
-\usepackage[utf8]{inputenc}  % Allows you to type UTF-8 characters directly
-\usepackage[T1]{fontenc}    % Ensures the PDF output uses 8-bit encoding for better font rendering
+% Niezbędne dla polskich znaków
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 
-\title{wspolrzedne-grafu}
-\author{Ksawery Olaf }
-\date{March 2026}
+% Jedyny dodatkowy pakiet dla linków (wymagany przez Ciebie)
+\usepackage{hyperref}
 
 \begin{document}
 
-\maketitle
-
-\section{Dokumentacja funkcjonalna opisująca działanie projektu}
+\section{Dokumentacja funkcjonalna - Aplikacja w języku C}
 
 \subsection{Cel projektu}
-Celem niniejszej aplikacji jest automatyczne wyznaczanie optymalnych współrzędnych wierzchołków dla grafów planarnych. Program przekształca surową listę krawędzi w czytelną reprezentację wizualną, wykorzystując zaawansowane algorytmy rozmieszczania wierzchołków (tzw. \textit{graph layout algorithms}), co pozwala na uniknięcie nakładania się krawędzi i zwiększenie czytelności struktury danych.
+Głównym celem tego projektu jest to, aby skomplikowane sieci połączeń (grafy) przestały przypominać poplątane nitki spaghetti, a stały się czytelnym obrazkiem.
 
-\subsection{Opis funkcji programu}
-Program oferuje następujące funkcjonalności:
+W ramach projektu realizujemy następujące zadania:
 \begin{itemize}
-    \item Wczytywanie struktury grafu z plików tekstowych (lista krawędzi).
-    \item Obliczanie współrzędnych $x, y$ dla każdego węzła przy użyciu co najmniej dwóch algorytmów (np. Fruchterman–Reingold, Twierdzenie Tutte’a).
-    \item Eksport wyników do formatu tekstowego lub binarnego, zgodnie z wyborem użytkownika.
-    \item Wersja C: Szybkie przetwarzanie wsadowe za pomocą interfejsu linii poleceń (CLI).
-    \item Wersja Java: Interaktywna wizualizacja grafu z możliwością ręcznej modyfikacji widoku.
+    \item \textbf{Zlecamy matematykę komputerowi:} Tworzymy program w języku C, który sam obliczy, gdzie na ekranie powinna znaleźć się każda kropka, żeby linie między nimi się nie przecinały.
+    \item \textbf{Testujemy sprytne sposoby:} Sprawdzamy co najmniej dwa różne algorytmy (takie matematyczne „sztuczki”), żeby zobaczyć, który z nich lepiej radzi sobie z układaniem punktów.
+    \item \textbf{Działamy profesjonalnie:} Cały kod trzymamy na platformie GitHub, a dokumentację piszemy w LaTeX-u, aby wyglądała estetycznie i czysto.
 \end{itemize}
 
-\subsection{Interfejs użytkownika i obsługa programu}
+\subsection{Opis funkcji i algorytmów}
+Aplikacja w języku C działa wyłącznie w trybie tekstowym (linia poleceń). Implementuje dwa algorytmy rozmieszczania:
 
-\subsubsection{Aplikacja w języku C (CLI)}
-Program sterowany jest za pomocą flag i argumentów wywołania.
-\begin{description}
-    \item[\texttt{-i <plik>}] Określa plik wejściowy z listą krawędzi.
-    \item[\texttt{-o <plik>}] Określa plik wyjściowy dla współrzędnych.
-    \item[\texttt{-a <algorytm>}] Wybór algorytmu obliczeniowego (np. \texttt{FR} dla Fruchterman-Reingold, \texttt{TUT} dla Tutte).
-    \item[\texttt{-b}] Zapis wyniku w formacie binarnym (domyślnie tekstowy).
-\end{description}
+\subsubsection{Algorytm Fruchterman-Reingold}
 
-\subsubsection{Aplikacja w języku Java (GUI)}
-Interfejs graficzny umożliwia:
+Algorytm Fruchterman-Reingold jest klasycznym podejściem z grupy metod siłowych (\textit{force-directed layouts}). Traktuje on graf jako układ fizyczny, w którym wierzchołki podlegają prawom mechaniki klasycznej.
+
+Model fizyczny
+W modelu tym przyjmuje się dwie podstawowe interakcje między elementami grafu:
 \begin{itemize}
-    \item \textbf{Menu Plik:} Wczytywanie danych (tekstowych/binarnych) oraz zapis wyników.
-    \item \textbf{Panel Wizualizacji:} Samodzielnie zaimplementowany komponent rysujący graf.
-    \item \textbf{Panel Narzędziowy:} Wybór algorytmu, zmiana pola widzenia (zoom), oraz przełączanie etykiet/wag.
+    \item \textbf{Siła odpychania ($f_r$):} Działa między każdą parą wierzchołków w grafie, zapobiegając ich nakładaniu się. Jest wzorowana na prawie Coulomba dla ładunków jednoimiennych.
+    \item \textbf{Siła przyciągania ($f_a$):} Działa wyłącznie między wierzchołkami połączonymi krawędzią, dążąc do utrzymania ich w bliskiej odległości. Jest wzorowana na prawie Hooke'a (model sprężyny).
+\end{itemize}
+
+Podstawy matematyczne
+Kluczowym elementem algorytmu jest wyznaczenie optymalnej odległości między wierzchołkami, oznaczonej jako $k$, która zależy od powierzchni obszaru rysowania ($W \times H$) oraz liczby wierzchołków ($|V|$):
+
+$$k = \sqrt{\frac{W \cdot H}{|V|}}$$
+
+Dla wierzchołków oddalonych o dystans $d$, wartości sił obliczane są według wzorów:
+
+$$f_a(d) = \frac{d^2}{k}, \quad f_r(d) = \frac{k^2}{d}$$
+
+Proces iteracyjny i chłodzenie
+Algorytm działa w pętli, aktualizując pozycje wierzchołków o wektor wypadkowy sił. Aby układ ustabilizował się i przestał drgać w końcowej fazie, wprowadzany jest parametr temperatury $t$ (\textit{cooling schedule}).
+
+W każdej iteracji maksymalne przesunięcie wierzchołka jest ograniczane przez aktualną temperaturę:
+$$v_{pos} = v_{pos} + \frac{\vec{F}}{|\vec{F}|} \cdot \min(|\vec{F}|, t)$$
+
+Temperatura maleje liniowo lub wykładniczo w każdej iteracji, co pozwala na duże zmiany układu na początku obliczeń i precyzyjne dociągnięcie wierzchołków do stanu równowagi na końcu.
+
+\href{https://youtu.be/v1ZZFPmuAWo}{LINK DO WIZUALIZACJI}
+
+\subsubsection{Twierdzenie Tutte'a o sprężynach}
+Twierdzenie Tutte'a (1963) stanowi fundament teoretyczny dla wizualizacji grafów planarnych. Gwarantuje ono, że dla każdego grafu planarnego 3-spójnego istnieje osadzenie na płaszczyźnie, w którym wszystkie krawędzie są odcinkami prostymi, a ściany wewnętrzne są wielokątami wypukłymi.
+
+Metoda wag barycentrycznych
+Istota algorytmu polega na potraktowaniu krawędzi grafu jako idealnych sprężyn o zerowej długości spoczynkowej. Proces wyznaczania współrzędnych przebiega w dwóch etapach:
+
+\begin{enumerate}
+    \item \textbf{Ustalenie otoczki:} Wybierany jest cykl zewnętrzny grafu (ściana zewnętrzna), a jego wierzchołki są na sztywno przypisywane do pozycji tworzących wielokąt wypukły na płaszczyźnie.
+    \item \textbf{Wyznaczenie wnętrza:} Pozycje wszystkich wierzchołków wewnętrznych są wyznaczane jako średnia arytmetyczna pozycji ich sąsiadów.
+\end{enumerate}
+
+Sformułowanie matematyczne
+Dla każdego wierzchołka wewnętrznego $v_i$, jego współrzędne $(x_i, y_i)$ muszą spełniać następujący warunek równowagi:
+
+$$x_i = \frac{1}{\deg(v_i)} \sum_{j \in Adj(v_i)} x_j, \quad y_i = \frac{1}{\deg(v_i)} \sum_{j \in Adj(v_i)} y_j$$
+
+Gdzie $\deg(v_i)$ to stopień wierzchołka, a $Adj(v_i)$ to zbiór jego sąsiadów. 
+
+Układ równań liniowych
+Problem wyznaczenia współrzędnych sprowadza się do rozwiązania układu równań liniowych, który można zapisać macierzowo przy użyciu macierzy Laplaciana $L$:
+
+$$L\mathbf{x} = \mathbf{b}_x, \quad L\mathbf{y} = \mathbf{b}_y$$
+
+Wektor $\mathbf{b}$ zawiera informacje o ustalonych pozycjach wierzchołków zewnętrznej otoczki. Ponieważ macierz układu jest rzadka i symetryczna, rozwiązanie można uzyskać efektywnie przy użyciu metod takich jak eliminacja Gaussa lub metoda sprzężonych gradientów.
+
+\href{https://www.youtube.com/shorts/ZZ8RrJtKJ-o}{LINK DO WIZUALIZACJI}
+\subsection{Instrukcja obsługi – Jak uruchomić program?}
+
+Aplikacja nie posiada okienek ani przycisków – sterujemy nią za pomocą wpisywania komend w terminalu (konsoli). Jest to szybki sposób, który pozwala komputerowi skupić się wyłącznie na obliczeniach.
+
+\subsubsection{Krok 1: Przygotowanie pliku z grafem}
+Zanim uruchomisz program, musisz mieć plik tekstowy (np. \texttt{moj\_graf.txt}), w którym opiszesz połączenia. Każda linia w pliku to jedna „krawędź” (połączenie między dwoma punktami). Format to: 
+\\ \texttt{Nazwa\_Połączenia Punkt\_A Punkt\_B Waga}
+
+Przykład zawartości pliku:
+\begin{verbatim}
+Krawedz1 1 2 1.5
+Krawedz2 2 3 1.0
+\end{verbatim}
+
+\subsubsection{Krok 2: Uruchomienie programu}
+Otwórz terminal w folderze z programem i wpisz komendę według poniższego wzoru:
+\begin{verbatim}
+./program_c -i moj_graf.txt -o wyniki.txt -a 0
+\end{verbatim}
+
+\subsubsection{Krok 3: Zrozumienie opcji (flag)}
+Program potrzebuje od Ciebie kilku informacji, które przekazujesz za pomocą liter (tzw. flag):
+\begin{itemize}
+    \item \texttt{-i} (Input) – Po tej literze wpisz nazwę swojego pliku z danymi.
+    \item \texttt{-o} (Output) – Tutaj wpisz, jak ma się nazywać plik, który program stworzy (tam będą gotowe współrzędne).
+    \item \texttt{-a} (Algorytm) – Wybierz, jak program ma liczyć: 
+        \begin{itemize}
+            \item \texttt{0} – tryb „siłowy” (rozpychanie kropek, aby było ładnie),
+            \item \texttt{1} – tryb „matematyczny” (układanie wewnątrz figur).
+        \end{itemize}
+    \item \texttt{-b} (Binary) – Jeśli dodasz tę literę na końcu, program zapisze wynik w formacie „tylko dla komputera” (binarnym). Jeśli jej nie dasz, plik będzie zwykłym tekstem, który możesz otworzyć w Notatniku.
 \end{itemize}
 
 \subsection{Format danych wejściowych i wyjściowych}
-\paragraph{Dane wejściowe (TXT):} Plik powinien zawierać wiersze w formacie: \\
-\texttt{<nazwa\_krawędzi> <wierzchołek\_A> <wierzchołek\_B> <waga>}.
 
-\paragraph{Dane wyjściowe (TXT):} Wynikiem jest lista współrzędnych: \\
-\texttt{<id\_wierzchołka> <x> <y>}.
+Aby dane były łatwe do odczytania zarówno dla komputera, jak i dla człowieka, program korzysta z formatu tekstowego zgodnego ze standardem CSV (ang. \textit{Comma-Separated Values}). Oznacza to, że poszczególne informacje w każdej linii są oddzielone od siebie przecinkami.
 
-\subsection{Sytuacje wyjątkowe i komunikaty błędów}
-Program przewiduje i obsługuje następujące błędy:
-\begin{table}[h]
-\centering
-\begin{tabular}{|l|l|}
-\hline
-\textbf{Sytuacja} & \textbf{Komunikat / Zachowanie} \\ \hline
-Brak pliku wejściowego & "Error: Input file not found." (Kod powrotu 1) \\ \hline
-Nieprawidłowy format danych & "Error: Invalid graph format at line [nr]." \\ \hline
-Graf nie jest planarny & "Warning: Provided graph may not be planar." \\ \hline
-Błąd zapisu & "Error: Permission denied / Disk full." \\ \hline
-\end{tabular}
-\caption{Obsługa błędów w aplikacji.}
-\end{table}
-\section{Dokumentacja implementacyjna}
-\section{Końcowa dokumentacja projektu}
+\subsubsection{Format wejściowy (Lista krawędzi)}
+Plik, który przygotowujesz dla programu, musi zawierać opis połączeń w grafie. Każda linia pliku odpowiada jednej krawędzi.
+
+Format zapisu w linii:
+\begin{itemize}
+    \item \texttt{nazwa\_krawędzi,id\_punktu\_A,id\_punktu\_B,waga\_połączenia}.
+\end{itemize}
+
+\textbf{Przykład pliku wejściowego:}
+\begin{verbatim}
+AB,1,2,1.0
+BC,2,3,1.0
+CD,3,4,1.4
+\end{verbatim}
+
+\subsubsection{Format wyjściowy (Współrzędne punktów)}
+Po wykonaniu obliczeń program stworzy plik tekstowy z gotowymi pozycjami dla każdego punktu. Ten plik również jest zapisany w formacie CSV, aby można go było łatwo sprawdzić w dowolnym edytorze.
+
+Format zapisu w linii:
+\begin{itemize}
+    \item \texttt{id\_punktu,współrzędna\_x,współrzędna\_y}
+\end{itemize}
+
+\textbf{Przykład pliku wyjściowego:}
+\begin{verbatim}
+1,0.0,0.5
+2,1.2,0.0
+3,1.2,1.5
+\end{verbatim}
+
+\subsubsection{Opcjonalny format binarny}
+Jeśli zależy Ci na szybkości działania przy bardzo dużych grafach, program może zapisać te same dane w formacie binarnym. Taki plik nie jest czytelny dla człowieka (zobaczymy w nim „krzaczki”), ale program w Javie wczyta go natychmiastowo, co jest kluczowe przy przesyłaniu danych między aplikacjami.
 
 \end{document}
