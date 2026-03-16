@@ -12,13 +12,14 @@
 \section{Dokumentacja funkcjonalna - Aplikacja w języku C}
 
 \subsection{Cel projektu}
-Głównym celem tego projektu jest to, aby skomplikowane sieci połączeń (grafy) przestały przypominać poplątane nitki spaghetti, a stały się czytelnym obrazkiem.
 
-W ramach projektu realizujemy następujące zadania:
+Głównym celem projektu jest stworzenie konsolowej aplikacji w języku C, która potrafi ,,ładnie'' i czytelnie rozrysować graf na płaszczyźnie. Program przyjmuje surowe dane o wierzchołkach oraz łączących je krawędziach, a następnie oblicza dla nich takie współrzędne, aby wygenerowany obraz był przejrzysty i miał jak najmniej przecinających się linii.
+
+W ramach tej części projektu skupiamy się na trzech głównych zadaniach:
 \begin{itemize}
-    \item \textbf{Zlecamy matematykę komputerowi:} Tworzymy program w języku C, który sam obliczy, gdzie na ekranie powinna znaleźć się każda kropka, żeby linie między nimi się nie przecinały.
-    \item \textbf{Testujemy sprytne sposoby:} Sprawdzamy co najmniej dwa różne algorytmy (takie matematyczne „sztuczki”), żeby zobaczyć, który z nich lepiej radzi sobie z układaniem punktów.
-    \item \textbf{Działamy profesjonalnie:} Cały kod trzymamy na platformie GitHub, a dokumentację piszemy w LaTeX-u, aby wyglądała estetycznie i czysto.
+    \item \textbf{Przetwarzaniu danych:} Poprawnym wczytaniu pliku tekstowego z opisem grafu i wygenerowaniu gotowych współrzędnych w formacie tekstowym lub binarnym (aby przygotować grunt pod drugą część projektu w Javie).
+    \item \textbf{Algorytmice:} Zaimplementowaniu dwóch różnych matematycznych metod rozmieszczania węzłów (algorytmu Fruchtermana-Reingolda oraz algorytmu Tutte'a), co pozwoli nam w praktyce porównać ich skuteczność.
+    \item \textbf{Dobrych praktykach inżynierskich:} Bieżącym wersjonowaniu kodu przy użyciu systemu Git oraz tworzeniu przejrzystej dokumentacji w środowisku \LaTeX.
 \end{itemize}
 
 \subsection{Opis funkcji i algorytmów}
@@ -114,40 +115,63 @@ Program potrzebuje od Ciebie kilku informacji, które przekazujesz za pomocą li
 \end{itemize}
 
 \subsection{Format danych wejściowych i wyjściowych}
-
-Aby dane były łatwe do odczytania zarówno dla komputera, jak i dla człowieka, program korzysta z formatu tekstowego zgodnego ze standardem CSV (ang. \textit{Comma-Separated Values}). Oznacza to, że poszczególne informacje w każdej linii są oddzielone od siebie przecinkami.
+Aby dane były łatwe do odczytania zarówno dla komputera, jak i dla człowieka, program korzysta z prostego formatu tekstowego. Poszczególne informacje w każdej linii są oddzielone od siebie znakami białymi (spajami).
 
 \subsubsection{Format wejściowy (Lista krawędzi)}
 Plik, który przygotowujesz dla programu, musi zawierać opis połączeń w grafie. Każda linia pliku odpowiada jednej krawędzi.
 
-Format zapisu w linii:
+Format zapisu w pojedynczej linii:
 \begin{itemize}
-    \item \texttt{nazwa\_krawędzi,id\_punktu\_A,id\_punktu\_B,waga\_połączenia}.
+    \item \texttt{<nazwa\_krawędzi> <id\_punktu\_A> <id\_punktu\_B> <waga\_połączenia>}
 \end{itemize}
 
 \textbf{Przykład pliku wejściowego:}
 \begin{verbatim}
-AB,1,2,1.0
-BC,2,3,1.0
-CD,3,4,1.4
+AB 1 2 1.0
+BC 2 3 1.0
+CD 3 4 1.4
 \end{verbatim}
 
 \subsubsection{Format wyjściowy (Współrzędne punktów)}
-Po wykonaniu obliczeń program stworzy plik tekstowy z gotowymi pozycjami dla każdego punktu. Ten plik również jest zapisany w formacie CSV, aby można go było łatwo sprawdzić w dowolnym edytorze.
+Po wykonaniu obliczeń program domyślnie stworzy plik tekstowy z gotowymi pozycjami dla każdego wierzchołka. Taki plik można łatwo otworzyć i zweryfikować w dowolnym edytorze tekstu. Wartości w poszczególnych liniach oddzielone są spacjami.
 
-Format zapisu w linii:
+Format zapisu w pojedynczej linii:
 \begin{itemize}
-    \item \texttt{id\_punktu,współrzędna\_x,współrzędna\_y}
+    \item \texttt{<id\_wierzchołka> <współrzędna\_x> <współrzędna\_y>}
 \end{itemize}
 
 \textbf{Przykład pliku wyjściowego:}
 \begin{verbatim}
-1,0.0,0.5
-2,1.2,0.0
-3,1.2,1.5
+1 0.0 0.5
+2 1.2 0.0
+3 1.2 1.5
 \end{verbatim}
 
 \subsubsection{Opcjonalny format binarny}
-Jeśli zależy Ci na szybkości działania przy bardzo dużych grafach, program może zapisać te same dane w formacie binarnym. Taki plik nie jest czytelny dla człowieka (zobaczymy w nim „krzaczki”), ale program w Javie wczyta go natychmiastowo, co jest kluczowe przy przesyłaniu danych między aplikacjami.
+Jeśli zależy nam na wydajności przy przetwarzaniu bardzo dużych grafów, program może zapisać wyniki w zoptymalizowanym formacie binarnym. Taki plik nie jest bezpośrednio czytelny dla człowieka (zawiera surowe zrzuty danych z pamięci), ale jego zastosowanie jest kluczowe przy przekazywaniu wyników do innych aplikacji lub kolejnych modułów analitycznych. Pozwala to wyeliminować czasochłonne parsowanie tekstu i gwarantuje błyskawiczne wczytywanie danych.
 
+\subsection{Sytuacje wyjątkowe i kody błędów}
+Program został zabezpieczony przed podstawowymi błędami ze strony użytkownika oraz problemami systemowymi. W przypadku wystąpienia błędu, program przerywa działanie, wyświetla odpowiedni komunikat na standardowym wyjściu błędów (\texttt{stderr}) i zwraca kod błędu inny niż \texttt{0}.
+
+\begin{itemize}
+    \item \textbf{Kod 1 - Brak wymaganych argumentów:} \\
+    \texttt{Błąd: Nie podano pliku wejściowego lub wyjściowego.} \\
+    \textit{Przyczyna:} Użytkownik nie podał wymaganych flag \texttt{-i} lub \texttt{-o} przy uruchamianiu programu.
+    
+    \item \textbf{Kod 2 - Błąd odczytu pliku:} \\
+    \texttt{Błąd: Nie można otworzyć pliku wejściowego.} \\
+    \textit{Przyczyna:} Wskazany plik z grafem nie istnieje, ścieżka jest nieprawidłowa lub program nie ma uprawnień do odczytu.
+    
+    \item \textbf{Kod 3 - Niepoprawny format danych:} \\
+    \texttt{Błąd: Niepoprawny format pliku wejściowego.} \\
+    \textit{Przyczyna:} Plik z grafem zawiera nieobsługiwane znaki, brakuje parametrów lub wagi krawędzi nie są wartościami liczbowymi.
+    
+    \item \textbf{Kod 4 - Niewłaściwe parametry flag:} \\
+    \texttt{Błąd: Niewłaściwa wartość argumentu.} \\
+    \textit{Przyczyna:} Podano nieznany numer algorytmu (inny niż 0 lub 1) lub dodano nieznaną flagę.
+    
+    \item \textbf{Kod 5 - Błąd alokacji pamięci:} \\
+    \texttt{Błąd krytyczny: Brak pamięci do zaalokowania grafu.} \\
+    \textit{Przyczyna:} Program nie był w stanie przydzielić wymaganej pamięci dla bardzo dużego grafu.
+\end{itemize}
 \end{document}
