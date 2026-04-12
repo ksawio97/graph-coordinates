@@ -3,3 +3,6 @@ docs.log
 docs.fls
 docs.fdb_latexmk
 docs.synctex.gz
+
+bin/*
+build/*

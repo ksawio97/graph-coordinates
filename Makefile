@@ -2,19 +2,24 @@
 CC = gcc
 
 # Flagi kompilatora (włączone wszystkie ostrzeżenia, standard C11)
-CFLAGS = -Wall -Wextra -Wpedantic -std=c11 -g
+CFLAGS = -Wall -Wextra -Wpedantic -std=gnu11 -g
 
 # Flagi linkera (-lm jest wymagane do funkcji matematycznych np. sqrt z <math.h>)
 LDFLAGS = -lm
 
+SRC_DIR := ./src
+BUILD_DIR := ./build
+BIN_DIR := ./bin
 # Nazwa pliku wynikowego (aplikacji)
 TARGET = program_c
 
 # Lista plików źródłowych (.c)
 SRCS = main.c io.c layout.c
 
-# Zamiana listy plików .c na listę plików obiektowych .o
-OBJS = $(SRCS:.c=.o)
+# gdzie umieszczone są pliki (.c - SRC_FILES) (.o - OBJ_FILES) (program - BIN_DIR)
+SRC_FILES := $(addprefix $(SRC_DIR)/,$(SRCS))
+OBJ_FILES := $(addprefix $(BUILD_DIR)/,$(SRCS:.c=.o))
+TARGET := $(BIN_DIR)/app
 
 # Domyślny cel kompilacji
 .PHONY: all clean
@@ -22,11 +27,11 @@ OBJS = $(SRCS:.c=.o)
 all: $(TARGET)
 
 # Jak zbudować ostateczny program
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
+$(TARGET): $(OBJ_FILES)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ_FILES) $(LDFLAGS)
 
 # Jak kompilować poszczególne pliki .c na pliki .o
-%.o: %.c
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Reguła do czyszczenia projektu (usuwa pliki .o i plik wykonywalny)

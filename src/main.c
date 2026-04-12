@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <unistd.h> // Do getopt
 
-#include "graph.h"
-#include "io.h"
-#include "layout.h"
+#include "../headers/graph.h"
+#include "../headers/io.h"
+#include "../headers/layout.h"
 
 int main(int argc, char *argv[]) {
     char *input_file = NULL;
