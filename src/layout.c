@@ -7,6 +7,10 @@ void apply_fruchterman_reingold(Graph *g) {
     // dodac jeszcze obliczanie sił odpychania i przyciągania
 }
 
+void find_outside_wall(Graph *g) {
+
+}
+
 void apply_tutte_algorithm(Graph *g) {
     printf("-> [STUB] Uruchamianie algorytmu Tutte'a (1)...\n");
     //rozwiązanie układu równań liniowych

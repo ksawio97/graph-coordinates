@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     int algorithm = 0; // Domyślnie 0
     bool binary_output = false;
     int opt;
-
+    
     // Parsowanie flag
     while ((opt = getopt(argc, argv, "i:o:a:bh")) != -1) {
         switch (opt) {
