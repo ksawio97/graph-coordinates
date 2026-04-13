@@ -1,43 +1,44 @@
 #include "../headers/utils.h"
-#include <stdio.h>
 #include <stdlib.h>
 
-void add_element_set(Set *s, int id, int order) {
-    LinkList* l = s->values[id % s->size];
+void add_element_dict(Dict* d, int id, int index) {
+    int dict_index = abs(id) % d->size;
+
+    LinkList* l = d->values[dict_index];
     LinkList* n = malloc(sizeof(LinkList));
     n->id = id;
-    n->order = order;
+    n->index = index;
     n->next = NULL;
     if (l == NULL) {
-        s->values[id % s->size] = n; 
+        d->values[dict_index] = n; 
     } else {
         while (l->next != NULL) {
             l = l->next;
         }   
-        s->values[id % s->size]->next = n;
+        d->values[dict_index]->next = n;
     }
 }
-// zwraca order lub -1 jak nie ma
-int contains_set(Set *s, int id) {
-    int index = id % s->size;
-    if (s->values[index] == NULL) {
+// zwraca index lub -1 jak nie ma
+int contains_dict(Dict *d, int id) {
+    int dict_index = abs(id) % d->size;
+    if (d->values[dict_index] == NULL) {
         return -1;
     }
     
-    LinkList *l = s->values[index];
+    LinkList *l = d->values[dict_index];
     while (l != NULL) {
         if (l->id == id) {
-            return l->order;
+            return l->index;
         }
         l = l->next;
     }
     return -1;
 }
 
-void free_set(Set *s) {
-   for (int i = 0; i < s->size; i++) {
+void free_dict(Dict *d) {
+   for (int i = 0; i < d->size; i++) {
        LinkList *prev = NULL;
-       LinkList *l = s->values[i]; 
+       LinkList *l = d->values[i]; 
        while (l != NULL) {
             prev = l;
             l = l->next;
@@ -45,16 +46,16 @@ void free_set(Set *s) {
             prev = NULL;
        }
    }
-   free(s);
+   free(d);
 }
 
-Set* new_set(int size) {
-    Set* s = malloc(sizeof(Set));
-    s->size = size;
-    s->values = malloc(sizeof(LinkList) * size);
+Dict* new_dict(int size) {
+    Dict* d = malloc(sizeof(Dict));
+    d->size = size;
+    d->values = malloc(sizeof(LinkList) * size);
     for (int i = 0; i < size; i++) {
-        s->values[i] = NULL;
+        d->values[i] = NULL;
     }
 
-    return s;
+    return d;
 }

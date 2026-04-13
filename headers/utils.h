@@ -3,19 +3,19 @@
 
 typedef struct LinkListStr {
     int id;
-    int order;
+    int index;
     struct LinkListStr* next;    
 } LinkList;
 
-typedef struct SetStr {
+typedef struct DictStr {
     int size;
     LinkList** values;
-} Set;
+} Dict;
 
 
-void add_element_set(Set *s, int id, int order);
-int contains_set(Set *s, int id);
-void free_set(Set *s);
-Set* new_set(int size);
+void add_element_dict(Dict *d, int id, int index);
+int contains_dict(Dict *d, int id);
+void free_dict(Dict *d);
+Dict* new_dict(int size);
 
 #endif

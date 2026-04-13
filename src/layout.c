@@ -1,10 +1,130 @@
 #include "../headers/layout.h"
+#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include "../headers/utils.h"
 
-// funckje pomocnicze do algorytmu tuttea
-static int is_boundary(int index) {
-    return (index < 3); 
+// Do algorytmu fruchtermana reingolda
+#define ITERATIONS 100       // Liczba kroków algorytmu
+#define C_REP 10.0           // Stała odpychania
+#define C_SPRING 1.0         // Stała przyciągania (sprężyny)
+#define L_IDEAL 5.0          // Idealna długość krawędzi
+#define INITIAL_TEMP 10.0    // Początkowa temperatura chłodzenia
+#define COOLING_FACTOR 0.95  // Współczynnik stygnięcia (95% w każdym kroku)
+                             //
+// Funkcja aplikująca siłę odpychania dla pojedynczej pary wierzchołków
+static void apply_repulsive_force(Vertex* u, Vertex* v, double C_rep) {
+    double dx = u->x - v->x;
+    double dy = u->y - v->y;
+    double dist = sqrt(dx*dx + dy*dy);
+
+    if (dist < 0.0001) dist = 0.0001; // Zabezpieczenie przed dzieleniem przez zero
+
+    double f_rep = C_rep / (dist * dist);
+    double dir_x = dx / dist;
+    double dir_y = dy / dist;
+
+    // u jest odpychane od v
+    u->force_x += f_rep * dir_x;
+    u->force_y += f_rep * dir_y;
+    
+    // v jest odpychane od u (w przeciwną stronę)
+    v->force_x -= f_rep * dir_x;
+    v->force_y -= f_rep * dir_y;
+}
+
+// Funkcja aplikująca siłę przyciągania (sprężyny) dla pojedynczej krawędzi
+static void apply_attractive_force(Vertex* u, Vertex* v, double C_spring, double l) {
+    double dx = u->x - v->x;
+    double dy = u->y - v->y;
+    double dist = sqrt(dx*dx + dy*dy);
+
+    if (dist < 0.0001) dist = 0.0001;
+
+    double f_attr = C_spring * log(dist / l);
+    double dir_x = dx / dist;
+    double dir_y = dy / dist;
+
+    // u i v ciągną siebie nawzajem
+    u->force_x -= f_attr * dir_x;
+    u->force_y -= f_attr * dir_y;
+    
+    v->force_x += f_attr * dir_x;
+    v->force_y += f_attr * dir_y;
+}
+
+Dict *get_id_index_dict(Graph *g) {
+    Dict *dict = new_dict(g->num_vertices);
+    
+    // Połączenie id -> index
+    for (int i = 0; i < g->num_vertices; i++) {
+       add_element_dict(dict, g->vertices[i].id, i); 
+    }
+
+    return dict;
+}
+
+void apply_fruchterman_reingold(Graph *g) {
+    printf("-> [STUB] Uruchamianie algorytmu Fruchtermana-Reingolda (0)...\n");
+    // dodac jeszcze obliczanie sił odpychania i przyciągania
+    if (!g || g->num_vertices == 0) {
+        printf("-> [FR] Graf jest pusty, pomijam obliczenia.\n");
+        return;
+    }
+
+    printf("-> Uruchamianie algorytmu Fruchtermana-Reingolda (0)...\n");
+
+    double temperature = INITIAL_TEMP;
+
+    // Główna pętla algorytmu
+    for (int iter = 0; iter < ITERATIONS; iter++) {
+        
+        // Wyzerowanie sił z poprzedniej iteracji
+        for (int i = 0; i < g->num_vertices; i++) {
+            g->vertices[i].force_x = 0.0;
+            g->vertices[i].force_y = 0.0;
+        }
+
+        // Aplikacja sił odpychania (każdy z każdym)
+        for (int i = 0; i < g->num_vertices; i++) {
+            for (int j = i + 1; j < g->num_vertices; j++) {
+                apply_repulsive_force(&g->vertices[i], &g->vertices[j], C_REP);
+            }
+        }
+        
+        Dict *id_index = get_id_index_dict(g);
+        // Aplikacja sił przyciągania (wzdłuż krawędzi)
+        for (int e = 0; e < g->num_edges; e++) {
+            // Zamieniamy id na index w tablicy g->vertices
+            int u_idx = contains_dict(id_index, g->edges[e].id_A);
+            int v_idx = contains_dict(id_index, g->edges[e].id_B);
+
+            // Zabezpieczenie przed wyjściem poza tablicę, gdyby indeksy były błędne
+            if (u_idx >= 0 && u_idx < g->num_vertices && 
+                v_idx >= 0 && v_idx < g->num_vertices) {
+                apply_attractive_force(&g->vertices[u_idx], &g->vertices[v_idx], C_SPRING, L_IDEAL);
+            }
+        }
+        free_dict(id_index);
+
+        // Aktualizacja pozycji z uwzględnieniem temperatury chłodzenia
+        for (int i = 0; i < g->num_vertices; i++) {
+            Vertex* v = &g->vertices[i];
+
+            double force_mag = sqrt(v->force_x * v->force_x + v->force_y * v->force_y);
+            
+            if (force_mag > 0) {
+                double step = fmin(force_mag, temperature);
+
+                v->x += (v->force_x / force_mag) * step;
+                v->y += (v->force_y / force_mag) * step;
+            }
+        }
+
+        //  Zmniejszenie temperatury (Cooling schedule)
+        temperature *= COOLING_FACTOR;
+    }
+
+    printf("-> Zakończono po %d iteracjach.\n", ITERATIONS);
 }
 
 static int get_degree(Graph *g, int target_id) {
@@ -17,15 +137,6 @@ static int get_degree(Graph *g, int target_id) {
     return degree;
 }
 
-
-void apply_fruchterman_reingold(Graph *g) {
-    printf("-> [STUB] Uruchamianie algorytmu Fruchtermana-Reingolda (0)...\n");
-    // dodac jeszcze obliczanie sił odpychania i przyciągania
-}
-
-void find_outside_wall(Graph *g) {
-
-}
 
 void apply_tutte_algorithm(Graph *g) {
     printf("-> [STUB] Uruchamianie algorytmu Tutte'a (1)...\n");

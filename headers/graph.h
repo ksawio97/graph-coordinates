@@ -15,8 +15,12 @@ typedef struct {
 // Reprezentacja krawędzi (zgodnie z formatem: Nazwa A B Waga)
 typedef struct {
     char name[32];
+    // TO DELETE
     int id_A;
     int id_B;
+    // END
+    int index_A;
+    int index_B;
     double weight;
 } Edge;
 
