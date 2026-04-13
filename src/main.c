@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <unistd.h> // Do getopt
 
-#include "graph.h"
-#include "io.h"
-#include "layout.h"
+#include "../headers/graph.h"
+#include "../headers/io.h"
+#include "../headers/layout.h"
 
 int main(int argc, char *argv[]) {
     char *input_file = NULL;
@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     int algorithm = 0; // Domyślnie 0
     bool binary_output = false;
     int opt;
-
+    
     // Parsowanie flag
     while ((opt = getopt(argc, argv, "i:o:a:bh")) != -1) {
         switch (opt) {

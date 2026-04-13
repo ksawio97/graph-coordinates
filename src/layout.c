@@ -1,4 +1,4 @@
-#include "layout.h"
+#include "../headers/layout.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -21,6 +21,10 @@ static int get_degree(Graph *g, int target_id) {
 void apply_fruchterman_reingold(Graph *g) {
     printf("-> [STUB] Uruchamianie algorytmu Fruchtermana-Reingolda (0)...\n");
     // dodac jeszcze obliczanie sił odpychania i przyciągania
+}
+
+void find_outside_wall(Graph *g) {
+
 }
 
 void apply_tutte_algorithm(Graph *g) {
@@ -106,3 +110,4 @@ void apply_tutte_algorithm(Graph *g) {
         }
     }
 }
+
