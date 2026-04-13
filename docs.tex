@@ -269,16 +269,44 @@ bool save_graph_to_file(const Graph *g, const char *filename, bool binary_mode) 
 }
 \end{verbatim}
 \subsection{Algorytmy pozycjonowania (layout.c)}
-Moduł ten zawiera implementację logiki matematycznej. Zastosowanie wskaźników do struktury \texttt{Graph} pozwala na modyfikację współrzędnych bezpośrednio w miejscu ich przechowywania.
+Moduł ten stanowi rdzeń obliczeniowy aplikacji, implementując zaawansowane techniki geometrii obliczeniowej i fizyki cząsteczek. Zastosowanie wskaźników do głównej struktury \texttt{Graph} pozwala na wysoką wydajność poprzez modyfikację współrzędnych bezpośrednio w pamięci, bez konieczności kosztownego kopiowania danych.
 
+\begin{enumerate}
+    \item \textbf{Funkcja \texttt{apply\_fruchterman\_reingold(Graph *g)}} \\
+    Implementuje algorytm siłowy (\textit{force-directed layout}), który dąży do osiągnięcia stanu równowagi energetycznej układu.
+    \begin{itemize}
+        \item \textbf{Mechanika:} Algorytm symuluje siły odpychania między wszystkimi parami wierzchołków ($f_r \sim k^2/d$) oraz siły przyciągania działające wzdłuż krawędzi ($f_a \sim d^2/k$).
+        \item \textbf{Proces chłodzenia:} Wykorzystuje parametr temperatury (\textit{cooling schedule}), który ogranicza maksymalne przesunięcie wierzchołków w każdej iteracji. Zapobiega to oscylacjom i pozwala na precyzyjne „zastygnięcie” układu w optymalnej konfiguracji.
+        \item \textbf{Złożoność:} Obliczanie sił odpychania wymaga porównania każdej pary wierzchołków, co skutkuje złożonością $O(V^2)$ na każdą iterację.
+    \end{itemize}
 \begin{verbatim}
 void apply_fruchterman_reingold(Graph *g) {
-    printf("-> [STUB] Uruchamianie algorytmu (0)...\n");
-    // Obliczanie sił odpychania (pomiędzy wszystkimi wierzchołkami)
-    // Obliczanie sił przyciągania (tylko wzdłuż krawędzi)
-    // Aktualizacja pozycji z uwzględnieniem temperatury chłodzenia
+    // Inicjalizacja temperatury i parametrów fizycznych
+    // Pętla iteracyjna (np. 100 kroków):
+    //   1. Obliczanie sił odpychania (Repulsive Forces)
+    //   2. Obliczanie sił przyciągania (Attractive Forces)
+    //   3. Aktualizacja pozycji z ograniczeniem o temperaturę
+    //   4. Redukcja temperatury (Cooling)
 }
 \end{verbatim}
+
+    \item \textbf{Funkcja \texttt{apply\_tutte\_algorithm(Graph *g)}} \\
+    Implementuje twierdzenie Tutte'a o osadzeniu barycentrycznym, które gwarantuje brak przecięć krawędzi dla grafów planarnych 3-spójnych.
+    \begin{itemize}
+        \item \textbf{Otoczka zewnętrzna:} Pierwszym etapem jest zidentyfikowanie cyklu zewnętrznego i „zakotwiczenie” jego wierzchołków na planie wielokąta wypukłego (np. koła).
+        \item \textbf{Równowaga barycentryczna:} Pozycje wierzchołków wewnętrznych są wyznaczane tak, aby każdy z nich znajdował się w środku ciężkości swoich sąsiadów. Matematycznie odpowiada to rozwiązaniu układu równań liniowych $Lx = b$, gdzie $L$ jest macierzą Laplaciana grafu.
+        \item \textbf{Stabilność:} W przeciwieństwie do algorytmów siłowych, metoda Tutte'a jest deterministyczna i zawsze zwraca ten sam wynik dla danej otoczki.
+    \end{itemize}
+\begin{verbatim}
+void apply_tutte_algorithm(Graph *g) {
+    // 1. Znalezienie cyklu zewnętrznego (otoczki)
+    // 2. Rozmieszczenie otoczki na okręgu (punkty stałe)
+    // 3. Budowa układu równań dla punktów wewnętrznych
+    // 4. Rozwiązanie układu metodą iteracyjną lub eliminacji
+    // 5. Przypisanie obliczonych współrzędnych do wierzchołków
+}
+\end{verbatim}
+\end{enumerate}
 
 \subsection{Logika sterowania i cykl życia programu (main.c)}
 Plik \texttt{main.c} zarządza pełnym cyklem życia aplikacji — od parsowania argumentów przy użyciu \texttt{getopt}, przez nadzór nad obliczeniami, aż po finalne czyszczenie pamięci.
