@@ -12,9 +12,21 @@ void add_element_dict(Dict* d, int id, int index) {
     if (l == NULL) {
         d->values[dict_index] = n; 
     } else {
+        // find last element
         while (l->next != NULL) {
+            // there's already this id in Dict
+            if (l->id == id) {
+                free(n);
+                return;
+            }
             l = l->next;
         }   
+
+        // there's already this id in Dict
+        if (l->id == id) {
+            free(n);
+            return;
+        }
         d->values[dict_index]->next = n;
     }
 }

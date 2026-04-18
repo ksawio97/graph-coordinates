@@ -14,7 +14,7 @@ BIN_DIR := ./bin
 TARGET = program_c
 
 # Lista plików źródłowych (.c)
-SRCS = main.c io.c layout.c utils.c
+SRCS = main.c io.c layout.c utils.c graph.c
 
 # gdzie umieszczone są pliki (.c - SRC_FILES) (.o - OBJ_FILES) (program - BIN_DIR)
 SRC_FILES := $(addprefix $(SRC_DIR)/,$(SRCS))

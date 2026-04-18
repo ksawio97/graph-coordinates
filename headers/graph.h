@@ -15,24 +15,24 @@ typedef struct {
 // Reprezentacja krawędzi (zgodnie z formatem: Nazwa A B Waga)
 typedef struct {
     char name[32];
-    // TO DELETE
     int id_A;
     int id_B;
-    // END
-    int index_A;
-    int index_B;
     double weight;
 } Edge;
 
 // Główna struktura grafu
 typedef struct {
-    Vertex *vertices;
+    Vertex **vertices;
     int num_vertices;
     int capacity_vertices; 
     
-    Edge *edges;
+    Edge **edges;
     int num_edges;
     int capacity_edges;
 } Graph;
 
-#endif
+Vertex *create_vertex(int id);
+Edge *create_edge();
+
+void free_graph(Graph *g);
+#endif 

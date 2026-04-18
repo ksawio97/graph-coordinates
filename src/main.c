@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
     int io_error_code = 0;
     Graph *g = load_graph_from_file(input_file, &io_error_code);
     
+    save_graph_to_file(g, output_file, binary_output);
 
     if (!g) {
         return io_error_code; 
