@@ -123,6 +123,11 @@ void apply_fruchterman_reingold(Graph *g) {
 
     printf("-> Zakończono po %d iteracjach.\n", ITERATIONS);
 }
+#include <stdlib.h>
+
+#ifndef M_PI
+#define M_PI 3.14
+#endif
 
 static int get_degree(Graph *g, int target_id) {
     int degree = 0;

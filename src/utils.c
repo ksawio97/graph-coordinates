@@ -64,7 +64,7 @@ void free_dict(Dict *d) {
 Dict* new_dict(int size) {
     Dict* d = malloc(sizeof(Dict));
     d->size = size;
-    d->values = malloc(sizeof(LinkList) * size);
+    d->values = malloc(sizeof(LinkList*) * size);
     for (int i = 0; i < size; i++) {
         d->values[i] = NULL;
     }
