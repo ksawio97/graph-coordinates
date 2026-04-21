@@ -55,9 +55,9 @@ void free_dict(Dict *d) {
             prev = l;
             l = l->next;
             free(prev);
-            prev = NULL;
        }
    }
+   free(d->values);
    free(d);
 }
 

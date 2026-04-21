@@ -8,10 +8,8 @@ CFLAGS = -Wall -Wextra -Wpedantic -std=gnu11 -g
 LDFLAGS = -lm
 
 SRC_DIR := ./src
-BUILD_DIR := ./build
-BIN_DIR := ./bin
-# Nazwa pliku wynikowego (aplikacji)
-TARGET = program_c
+BUILD_DIR := build
+BIN_DIR := bin
 
 # Lista plików źródłowych (.c)
 SRCS = main.c io.c layout.c utils.c graph.c
@@ -40,5 +38,6 @@ clean:
 ifeq ($(OS),Windows_NT)
 	del /Q /F *.o $(TARGET).exe 2>nul || true
 else
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(BUILD_DIR) $(BIN_DIR)
+	 
 endif

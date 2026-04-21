@@ -26,10 +26,12 @@ void free_graph(Graph *g) {
     for (int i = 0; i < g->num_edges; i++) {
         free(g->edges[i]);
     }
+    free(g->edges);
 
     for (int i = 0; i < g->num_vertices; i++) {
         free(g->vertices[i]);
     }
+    free(g->vertices);
 
     free(g);
 }

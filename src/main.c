@@ -65,12 +65,12 @@ int main(int argc, char *argv[]) {
 
     // zapis grafu do pliku
     if (!save_graph_to_file(g, output_file, binary_output)) {
-        free(g);
+        free_graph(g);
         return 2; 
     }
 
     // Sprzątanie pamięci
-    free(g);
+    free_graph(g);
     printf("Zakończono pomyślnie.\n");
 
     return 0;

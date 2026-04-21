@@ -21,15 +21,21 @@ void read_data(FILE* fh, Graph* g) {
 
         // extend capacity if needed
         if (g->capacity_vertices < g->num_vertices) {
+            int old_cap = g->capacity_vertices;
             g->capacity_vertices *= 2;
-            g->vertices = realloc(g->vertices, sizeof(Vertex) * g->capacity_vertices);
+            g->vertices = realloc(g->vertices, sizeof(Vertex*) * g->capacity_vertices);
+            for (int i = old_cap; i < g->capacity_vertices; i++) 
+                g->vertices[i] = NULL;
         }
 
 
         // ditto but for edges
         if (g->capacity_edges < g->num_edges) {
+            int old_cap = g->capacity_edges;
             g->capacity_edges *= 2;
-            g->edges = realloc(g->edges, sizeof(Edge) * g->capacity_edges);
+            g->edges = realloc(g->edges, sizeof(Edge*) * g->capacity_edges);
+            for (int i = old_cap; i < g->capacity_edges; i++) 
+                g->edges[i] = NULL;
         }
 
         if (!has_B) {
@@ -70,8 +76,8 @@ Graph* load_graph_from_file(const char *filename, int *err_code) {
     
     g->capacity_edges = 1;
     g->capacity_vertices = 1;
-    g->edges = malloc(sizeof(Edge));
-    g->vertices = malloc(sizeof(Vertex));
+    g->edges = malloc(sizeof(Edge*));
+    g->vertices = malloc(sizeof(Vertex*));
     //dodac dynamiczne dodoawanie woerzcholkow itp.
     read_data(file, g);
 

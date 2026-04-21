@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 nodes, edges = [], []
-
 with open("data/out.txt", "r+") as fh:
     nodes = dict([(int(line.split(' ')[0]), list(map(float, line.split(' ')[1:]))) for line in fh.read().split('\n')[:-1]])
     print(nodes)
