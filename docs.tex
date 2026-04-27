@@ -176,165 +176,87 @@ Program został zabezpieczony przed podstawowymi błędami ze strony użytkownik
 \end{itemize}
 \section{Dokumentacja implementacyjna — Architektura i techniczne szczegóły systemu}
 
-Niniejszy rozdział stanowi szczegółowe kompendium wiedzy na temat implementacji silnika obliczeniowego w języku C. Opisuje on strukturę danych, podział logiczny na moduły, zarządzanie pamięcią oraz przepływ sterowania, stanowiąc fundament dla przyszłej konserwacji i rozbudowy oprogramowania.
+Niniejszy rozdział stanowi szczegółowe kompendium wiedzy na temat implementacji silnika obliczeniowego w języku C. Opisuje on strukturę danych, podział logiczny na moduły, zaawansowane zarządzanie pamięcią oraz matematyczne aspekty algorytmów, stanowiąc fundament dla przyszłej konserwacji i rozbudowy oprogramowania.
 
 \subsection{Filozofia projektowa i modularność}
-Program został zaprojektowany zgodnie z paradygmatem programowania strukturalnego, z silnym naciskiem na enkapsulację funkcjonalną. Całość systemu podzielono na cztery główne jednostki, co pozwala na niezależne testowanie warstwy obliczeniowej oraz warstwy komunikacji z systemem plików:
+Program został zaprojektowany zgodnie z paradygmatem programowania strukturalnego, z silnym naciskiem na enkapsulację funkcjonalną i wysoką wydajność operacji na grafie. Całość systemu podzielono na pięć logicznych jednostek:
 
 \begin{itemize}
-    \item \textbf{Moduł Definicji Danych (\texttt{graph.h}):} Centralne miejsce definiujące abstrakcyjne typy danych.
-    \item \textbf{Moduł Logiki Sterującej (\texttt{main.c}):} Punkt wejścia aplikacji, odpowiedzialny za walidację parametrów wejściowych i orkiestrację procesów.
-    \item \textbf{Moduł Operacji Wejścia/Wyjścia (\texttt{io.c, io.h}):} Warstwa abstrakcji nad systemem plików, obsługująca formaty tekstowe i binarne.
-    \item \textbf{Moduł Algorytmów Rozmieszczania (\texttt{layout.c, layout.h}):} Implementacja matematyczna algorytmów pozycjonowania wierzchołków.
+    \item \textbf{Moduł Definicji Danych (\texttt{graph.h, graph.c}):} Definiuje abstrakcyjne typy danych oraz funkcje pomocnicze do kreacji i zwalniania obiektów grafu.
+    \item \textbf{Moduł Narzędziowy (\texttt{utils.h, utils.c}):} Implementuje strukturę słownika (haszmapy) niezbędną do wydajnego mapowania identyfikatorów wierzchołków na indeksy tablicy.
+    \item \textbf{Moduł Operacji Wejścia/Wyjścia (\texttt{io.h, io.c}):} Realizuje niskopoziomowe operacje na plikach, obsługuje parsowanie tekstu oraz serializację binarną.
+    \item \textbf{Moduł Algorytmów (\texttt{layout.h, layout.c}):} Zawiera jądro obliczeniowe aplikacji — implementację metod Fruchtermana-Reingolda oraz Tutte'a.
+    \item \textbf{Moduł Sterujący (\texttt{main.c}):} Odpowiada za analizę argumentów linii poleceń (\texttt{getopt}) oraz orkiestrację przepływu danych.
 \end{itemize}
 
 \subsection{Szczegółowa analiza struktur danych}
-Wybór struktur danych w pliku \texttt{graph.h} jest kluczowy dla wydajności algorytmów siłowych, które wymagają częstego dostępu do współrzędnych i buforów sił.
+Wybór struktur danych w projekcie podyktowany był koniecznością dynamicznego skalowania zasobów podczas wczytywania grafu o nieznanym rozmiarze.
 
-\subsubsection{Reprezentacja wierzchołka (Vertex)}
-Każdy wierzchołek jest reprezentowany przez strukturę przechowującą stan geometryczny oraz fizyczny punktu. Zastosowanie typu \texttt{double} gwarantuje precyzję niezbędną przy iteracyjnych obliczeniach zmiennoprzecinkowych.
+\subsubsection{Reprezentacja wierzchołka i krawędzi}
+Zastosowanie typu \texttt{double} dla współrzędnych i składowych sił zapewnia precyzję niezbędną przy iteracyjnych obliczeniach zmiennoprzecinkowych, gdzie błędy zaokrągleń mogłyby prowadzić do niestabilności układu.
 
 \begin{verbatim}
 typedef struct {
-    int id;             // Unikalny identyfikator wierzchołka
-    double x;           // Bieżąca współrzędna X
-    double y;           // Bieżąca współrzędna Y
-    double force_x;     // Składowa X wypadkowej siły (dla FR)
-    double force_y;     // Składowa Y wypadkowej siły (dla FR)
+    int id;             // Unikalny identyfikator zewnętrzny
+    double x, y;        // Bieżące współrzędne geometryczne
+    double force_x;     // Wypadkowa siła w osi X (dla FR)
+    double force_y;     // Wypadkowa siła w osi Y (dla FR)
 } Vertex;
 \end{verbatim}
 
-\subsubsection{Reprezentacja połączenia (Edge)}
-Struktura krawędzi odzwierciedla format wejściowy projektu, przechowując relacje między wierzchołkami oraz parametry wizualne (waga).
+\subsubsection{Zarządzanie dynamiczne grafem (\texttt{Graph})}
+W implementacji zastosowano model tablic wskaźników (\texttt{Vertex **vertices}), co optymalizuje proces relokacji pamięci (\texttt{realloc}). Dzięki temu rozwiązaniu, podczas powiększania pojemności grafu, system przesuwa w pamięci jedynie adresy wskaźników, a nie całe struktury danych.
 
 \begin{verbatim}
 typedef struct {
-    char name[32];      // Nazwa krawędzi (etykieta)
-    int id_A;           // ID wierzchołka początkowego
-    int id_B;           // ID wierzchołka końcowego
-    double weight;      // Waga krawędzi wpływająca na przyciąganie
-} Edge;
-\end{verbatim}
-
-\subsubsection{Zarządzanie dynamiczne grafem (Graph)}
-Aby umożliwić przetwarzanie grafów o nieznanej z góry wielkości, zastosowano mechanizm tablic dynamicznych z monitorowaniem pojemności (\textit{capacity}).
-
-\begin{verbatim}
-typedef struct {
-    Vertex *vertices;       // Dynamiczna tablica wierzchołków
-    int num_vertices;       // Aktualna liczba wierzchołków
-    int capacity_vertices;  // Zarezerwowany rozmiar pamięci dla V
-    
-    Edge *edges;            // Dynamiczna tablica krawędzi
-    int num_edges;          // Aktualna liczba krawędzi
-    int capacity_edges;     // Zarezerwowany rozmiar pamięci dla E
+    Vertex **vertices;       // Dynamiczna tablica wskaźników na wierzchołki
+    int num_vertices;        // Aktualna liczba wierzchołków
+    int capacity_vertices;   // Rozmiar zarezerwowanego bufora
+    Edge **edges;            // Dynamiczna tablica wskaźników na krawędzie
+    int num_edges;
+    int capacity_edges;
 } Graph;
 \end{verbatim}
 
+\subsection{Mechanizm mapowania ID i Moduł Utils}
+Kluczowym wyzwaniem implementacyjnym była obsługa nieciągłych identyfikatorów wierzchołków podawanych przez użytkownika (np. krawędź między ID 1 a ID 5000). 
+\begin{itemize}
+    \item \textbf{Struktura \texttt{Dict}:} Wykorzystuje tablicę mieszającą (\textit{hash table}) z listami powiązanymi do obsługi kolizji.
+    \item \textbf{Funkcja \texttt{contains\_dict}:} Pozwala na natychmiastowe sprawdzenie, czy wierzchołek o danym ID został już utworzony, i zwraca jego wewnętrzny indeks w tablicy \texttt{vertices}. Dzięki temu proces budowania grafu ma mniejszą złożoność obliczeniową.
+\end{itemize}
+
 \subsection{Implementacja warstwy wejścia/wyjścia}
-Moduł \texttt{io.c} implementuje krytyczne funkcje odpowiedzialne za stabilność programu podczas pracy z danymi zewnętrznymi.
+Moduł \texttt{io.c} realizuje dwuetapowe wczytywanie danych. Funkcja \texttt{read\_data} iteracyjnie analizuje plik wejściowy, dynamicznie zwiększając pojemność struktur (\texttt{capacity *= 2}) przy napotkaniu nowych danych.
 
-\subsubsection{Wczytywanie z walidacją zasobów}
-Funkcja \texttt{load\_graph\_from\_file} realizuje bezpieczne otwarcie pliku oraz pierwszą alokację struktury. W przypadku awarii systemu alokacji pamięci (\texttt{malloc}), program natychmiastowo zwalnia uchwyty do plików i propaguje błąd do funkcji głównej.
-
-\begin{verbatim}
-Graph* load_graph_from_file(const char *filename, int *err_code) {
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        fprintf(stderr, "Błąd: Nie można otworzyć pliku wejściowego.\n");
-        *err_code = 2; 
-        return NULL;
-    }
-
-    Graph *g = malloc(sizeof(Graph)); 
-    if (!g) {
-        fprintf(stderr, "Błąd krytyczny: Brak pamięci.\n");
-        fclose(file);
-        *err_code = 5; 
-        return NULL;
-    }
-    // Dalsza logika parsowania pliku...
-    return g; 
-}
-\end{verbatim}
-
-\subsubsection{Serializacja danych (Zapis)}
-Funkcja \texttt{save\_graph\_to\_file} oferuje dwa tryby pracy. Tryb tekstowy zapewnia kompatybilność i łatwość inspekcji, natomiast tryb binarny (uruchamiany flagą \texttt{-b}) pozwala na bezpośredni zrzut struktur z pamięci na dysk, co jest wykorzystywane przy przekazywaniu dużych zbiorów danych do modułu JAVA.
-\begin{verbatim}
-bool save_graph_to_file(const Graph *g, const char *filename, bool binary_mode) {
-    
-    printf("-> [STUB] Zapisuje graf do pliku: %s (Tryb binarny: %s)\n", 
-            filename, binary_mode ? "TAK" : "NIE");
-    return true;
-}
-\end{verbatim}
-\subsection{Algorytmy pozycjonowania (layout.c)}
-Moduł ten stanowi rdzeń obliczeniowy aplikacji, implementując zaawansowane techniki geometrii obliczeniowej i fizyki cząsteczek. Zastosowanie wskaźników do głównej struktury \texttt{Graph} pozwala na wysoką wydajność poprzez modyfikację współrzędnych bezpośrednio w pamięci, bez konieczności kosztownego kopiowania danych.
-
+\subsubsection{Serializacja i formaty wyjściowe}
+Funkcja \texttt{save\_graph\_to\_file} oferuje dwa tryby zapisu:
 \begin{enumerate}
-    \item \textbf{Funkcja \texttt{apply\_fruchterman\_reingold(Graph *g)}} \\
-    Implementuje algorytm siłowy (\textit{force-directed layout}), który dąży do osiągnięcia stanu równowagi energetycznej układu.
-    \begin{itemize}
-        \item \textbf{Mechanika:} Algorytm symuluje siły odpychania między wszystkimi parami wierzchołków ($f_r \sim k^2/d$) oraz siły przyciągania działające wzdłuż krawędzi ($f_a \sim d^2/k$).
-        \item \textbf{Proces chłodzenia:} Wykorzystuje parametr temperatury (\textit{cooling schedule}), który ogranicza maksymalne przesunięcie wierzchołków w każdej iteracji. Zapobiega to oscylacjom i pozwala na precyzyjne „zastygnięcie” układu w optymalnej konfiguracji.
-        \item \textbf{Złożoność:} Obliczanie sił odpychania wymaga porównania każdej pary wierzchołków, co skutkuje złożonością $O(V^2)$ na każdą iterację.
-    \end{itemize}
-\begin{verbatim}
-void apply_fruchterman_reingold(Graph *g) {
-    // Inicjalizacja temperatury i parametrów fizycznych
-    // Pętla iteracyjna (np. 100 kroków):
-    //   1. Obliczanie sił odpychania (Repulsive Forces)
-    //   2. Obliczanie sił przyciągania (Attractive Forces)
-    //   3. Aktualizacja pozycji z ograniczeniem o temperaturę
-    //   4. Redukcja temperatury (Cooling)
-}
-\end{verbatim}
-
-    \item \textbf{Funkcja \texttt{apply\_tutte\_algorithm(Graph *g)}} \\
-    Implementuje twierdzenie Tutte'a o osadzeniu barycentrycznym, które gwarantuje brak przecięć krawędzi dla grafów planarnych 3-spójnych.
-    \begin{itemize}
-        \item \textbf{Otoczka zewnętrzna:} Pierwszym etapem jest zidentyfikowanie cyklu zewnętrznego i „zakotwiczenie” jego wierzchołków na planie wielokąta wypukłego (np. koła).
-        \item \textbf{Równowaga barycentryczna:} Pozycje wierzchołków wewnętrznych są wyznaczane tak, aby każdy z nich znajdował się w środku ciężkości swoich sąsiadów. Matematycznie odpowiada to rozwiązaniu układu równań liniowych $Lx = b$, gdzie $L$ jest macierzą Laplaciana grafu.
-        \item \textbf{Stabilność:} W przeciwieństwie do algorytmów siłowych, metoda Tutte'a jest deterministyczna i zawsze zwraca ten sam wynik dla danej otoczki.
-    \end{itemize}
-\begin{verbatim}
-void apply_tutte_algorithm(Graph *g) {
-    // 1. Znalezienie cyklu zewnętrznego (otoczki)
-    // 2. Rozmieszczenie otoczki na okręgu (punkty stałe)
-    // 3. Budowa układu równań dla punktów wewnętrznych
-    // 4. Rozwiązanie układu metodą iteracyjną lub eliminacji
-    // 5. Przypisanie obliczonych współrzędnych do wierzchołków
-}
-\end{verbatim}
+    \item \textbf{Tryb tekstowy:} Zapisuje współrzędne w formacie czytelnym dla człowieka (\texttt{\%d \%lf \%lf}).
+    \item \textbf{Tryb binarny (\texttt{flag -b}):} Wykonuje bezpośredni zrzut struktur danych (\texttt{fwrite}) — zapisując kolejno \texttt{int id}, \texttt{double x} oraz \texttt{double y}. Jest to tryb zalecany dla integracji z modułem JAVA, gdyż eliminuje narzut związany z formatowaniem tekstu i zachowuje pełną precyzję bitową.
 \end{enumerate}
 
-\subsection{Logika sterowania i cykl życia programu (main.c)}
-Plik \texttt{main.c} zarządza pełnym cyklem życia aplikacji — od parsowania argumentów przy użyciu \texttt{getopt}, przez nadzór nad obliczeniami, aż po finalne czyszczenie pamięci.
+\subsection{Detale implementacyjne algorytmów (\texttt{layout.c})}
 
-\begin{verbatim}
-int main(int argc, char *argv[]) {
-    // 1. Parsowanie flag i walidacja argumentów
-    // 2. Wczytywanie danych do struktury dynamicznej
-    // 3. Wybór i uruchomienie algorytmu
-    if (algorithm == 0) {
-        apply_fruchterman_reingold(g);
-    } else {
-        apply_tutte_algorithm(g);
-    }
-    // 4. Zapis wyników i zwolnienie pamięci (free)
-    return 0;
-}
-\end{verbatim}
+\subsubsection{Algorytm Fruchterman-Reingold}
+Implementacja opiera się na 1000 iteracjach (\texttt{ITERATIONS}). W każdym kroku:
+\begin{itemize}
+    \item Obliczane są siły odpychania ($f_r \sim 1/dist^2$) między każdą parą wierzchołków ($O(V^2)$).
+    \item Obliczane są siły przyciągania ($f_a \sim \ln(dist)$) wzdłuż krawędzi.
+    \item \textbf{Cooling schedule:} Zastosowano współczynnik stygnięcia $0.95$, który w każdym kroku ogranicza maksymalne możliwe przesunięcie wierzchołka, co gwarantuje zbieżność algorytmu.
+\end{itemize}
 
-\subsection{System kodów błędów i diagnostyka}
-W celu zapewnienia integracji z innymi narzędziami, program implementuje rygorystyczny system kodów wyjścia:
-\begin{description}
-    \item[Kod 1:] Brak wymaganych parametrów wejściowych lub wyjściowych.
-    \item[Kod 2:] Błąd I/O (brak pliku, brak uprawnień zapisu).
-    \item[Kod 4:] Błąd walidacji (nieprawidłowy numer algorytmu lub błędna flaga).
-    \item[Kod 5:] Krytyczny błąd systemowy (brak wolnej pamięci RAM).
-\end{description}
+\subsubsection{Algorytm Tutte'a}
+Metoda ta została zaimplementowana jako proces iteracyjnego uśredniania pozycji wierzchołków wewnętrznych:
+\begin{itemize}
+    \item \textbf{Otoczka:} Program automatycznie zakotwicza pierwsze 3 wierzchołki na okręgu jednostkowym ($120^\circ$ między nimi).
+    \item \textbf{Równowaga:} W każdej iteracji pozycja wierzchołka $v_i$ jest aktualizowana do średniej arytmetycznej pozycji jego sąsiadów. 
+    \item \textbf{Kryterium zbieżności:} Algorytm przerywa pracę, gdy maksymalne przesunięcie wierzchołka w danej iteracji spadnie poniżej progu \texttt{tolerance = 0.0001}.
+\end{itemize}
 
-\subsection{Zarządzanie pamięcią operacyjną}
-Aplikacja wykorzystuje model jawnego zarządzania pamięcią na stercie (\textit{heap management}). Każda udana alokacja w module \texttt{io.c} posiada odpowiadającą jej operację \texttt{free()} w module \texttt{main.c}. Dzięki takiemu podejściu, nawet w przypadku przetworzenia tysięcy grafów w trybie wsadowym, program nie wykazuje wycieków pamięci, co zostało potwierdzone w procesie debugowania.
+\subsection{Zarządzanie pamięcią i stabilność}
+Aplikacja rygorystycznie przestrzega zasad bezpiecznego zarządzania pamięcią na stercie (\textit{heap management}):
+\begin{itemize}
+    \item Każdy moduł posiada dedykowane funkcje czyszczące (np. \texttt{free\_graph}, \texttt{free\_dict}).
+    \item W przypadku błędu alokacji (\texttt{malloc/realloc}), program nie dopuszcza do wycieku pamięci — zamyka otwarte uchwyty plików i zwalnia dotychczas zajęte struktury przed zwróceniem kodu błędu 5.
+\end{itemize}
 \end{document}
